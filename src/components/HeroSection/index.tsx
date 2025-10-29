@@ -16,6 +16,7 @@ function HeroSection() {
         </div>
       </div>
 
+      {/* Name and Title */}
       <div className={styles.nameContainer}>
         <h1 className={styles.nameContainerItem}>
           David J. Valdovinos Granados
