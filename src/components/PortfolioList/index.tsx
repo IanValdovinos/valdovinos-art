@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import styles from "./PortfolioList.module.css";
-import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { db } from "../../firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -7,6 +8,7 @@ import { collection, getDocs } from "firebase/firestore";
 import PortfolioCover from "../PortfolioCover";
 
 interface PortfolioCover {
+  id: string;
   imageUrl: string;
   title: string;
 }
@@ -22,6 +24,7 @@ function PortfolioList() {
       });
       setPortfolioCovers(
         querySnapshot.docs.map((doc) => ({
+          id: doc.id,
           imageUrl: doc.data().image_url,
           title: doc.data().title,
         }))
@@ -33,12 +36,13 @@ function PortfolioList() {
 
   return (
     <div className={styles.portfolioSection}>
-      {portfolioCovers.map((portfolio, index) => (
-        <PortfolioCover
-          key={index}
-          imageUrl={portfolio.imageUrl}
-          title={portfolio.title}
-        />
+      {portfolioCovers.map((portfolio) => (
+        <Link to={`/portfolio/${portfolio.id}`} key={portfolio.id}>
+          <PortfolioCover
+            imageUrl={portfolio.imageUrl}
+            title={portfolio.title}
+          />
+        </Link>
       ))}
     </div>
   );

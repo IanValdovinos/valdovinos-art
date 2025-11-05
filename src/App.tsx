@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Documents from "./pages/Documents";
 import "./App.css";
 import PortfolioList from "./components/PortfolioList";
+import Portfolio from "./components/Portfolio";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />}>
               <Route index element={<PortfolioList />} />
+              <Route path="/portfolio/:pid" element={<Portfolio />} />
             </Route>
 
             <Route path="/about" element={<About />} />
