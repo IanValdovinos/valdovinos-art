@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { collection, getDocs } from "firebase/firestore";
 
+import WorkCard from "../WorkCard";
+
 interface Work {
   id: string;
   imageUrl: string;
@@ -42,7 +44,20 @@ function Portfolio() {
     fetchWorks();
   }, [portfolioId]);
 
-  return <div>{portfolioId}</div>;
+  return (
+    <div>
+      {works.map((work) => (
+        <WorkCard
+          key={work.id}
+          title={work.title}
+          imageUrl={work.imageUrl}
+          date={work.date}
+          measurements={work.measurements}
+          technique={work.technique}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default Portfolio;
