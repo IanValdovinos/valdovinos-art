@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Documents from "./pages/Documents";
 import "./App.css";
+import PortfolioList from "./components/PortfolioList";
 
 function App() {
   return (
@@ -12,7 +13,10 @@ function App() {
         <Header />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home />}>
+              <Route index element={<PortfolioList />} />
+            </Route>
+
             <Route path="/about" element={<About />} />
             <Route path="/documents" element={<Documents />} />
             <Route
