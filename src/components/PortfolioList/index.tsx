@@ -19,9 +19,7 @@ function PortfolioList() {
   useEffect(() => {
     const fetchPortfolioCovers = async () => {
       const querySnapshot = await getDocs(collection(db, "portfolios"));
-      querySnapshot.forEach((doc) => {
-        console.log(`${doc.id} => ${doc.data()}`);
-      });
+
       setPortfolioCovers(
         querySnapshot.docs.map((doc) => ({
           id: doc.id,
