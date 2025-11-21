@@ -14,6 +14,7 @@ import LogInDialog from "./components/LogInDialog";
 import Header from "./components/Header";
 import PortfolioList from "./components/PortfolioList";
 import Portfolio from "./components/Portfolio";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [logInDialogOpen, setLogInDialogOpen] = useAtom(logInDialogAtom);
@@ -48,7 +49,14 @@ function App() {
 
         <Routes>
           {/* Admin route without Header */}
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           {/* All other routes with Header */}
           <Route
