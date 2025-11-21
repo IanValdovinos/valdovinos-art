@@ -5,11 +5,13 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useAtom } from "jotai";
 import { logInDialogAtom } from "./atoms/logInDialogAtom";
 
-import LogInDialog from "./components/LogInDialog";
-import Header from "./components/Header";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Documents from "./pages/Documents";
+import AdminDashboard from "./pages/AdminDashboard";
+
+import LogInDialog from "./components/LogInDialog";
+import Header from "./components/Header";
 import PortfolioList from "./components/PortfolioList";
 import Portfolio from "./components/Portfolio";
 
@@ -42,32 +44,45 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <Header />
         <LogInDialog open={logInDialogOpen} onClose={handleLogInClose} />
 
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />}>
-              <Route index element={<PortfolioList />} />
-              <Route path="/portfolio/:pid" element={<Portfolio />} />
-            </Route>
+        <Routes>
+          {/* Admin route without Header */}
+          <Route path="/admin" element={<AdminDashboard />} />
 
-            <Route path="/about" element={<About />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route
-              path="/skills"
-              element={<div>Skills Page - Coming Soon</div>}
-            />
-            <Route
-              path="/socials"
-              element={<div>Socials Page - Coming Soon</div>}
-            />
-            <Route
-              path="/contact"
-              element={<div>Contact Page - Coming Soon</div>}
-            />
-          </Routes>
-        </main>
+          {/* All other routes with Header */}
+          <Route
+            path="*"
+            element={
+              <>
+                <Header />
+                <main className="main-content">
+                  <Routes>
+                    <Route path="/" element={<Home />}>
+                      <Route index element={<PortfolioList />} />
+                      <Route path="/portfolio/:pid" element={<Portfolio />} />
+                    </Route>
+
+                    <Route path="/about" element={<About />} />
+                    <Route path="/documents" element={<Documents />} />
+                    <Route
+                      path="/skills"
+                      element={<div>Skills Page - Coming Soon</div>}
+                    />
+                    <Route
+                      path="/socials"
+                      element={<div>Socials Page - Coming Soon</div>}
+                    />
+                    <Route
+                      path="/contact"
+                      element={<div>Contact Page - Coming Soon</div>}
+                    />
+                  </Routes>
+                </main>
+              </>
+            }
+          />
+        </Routes>
       </div>
     </Router>
   );
