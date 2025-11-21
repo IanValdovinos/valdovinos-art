@@ -28,13 +28,11 @@ const LogInContent = ({ onClose }: LogInContentProps) => {
 
     // Sign in with Firebase Authentication
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in
-        const user = userCredential.user.toJSON();
+      .then(() => {
         onClose();
         navigate("/admin");
       })
-      .catch((error) => {
+      .catch(() => {
         alert(
           `Error logging in. Verify your email and password and try again.`
         );

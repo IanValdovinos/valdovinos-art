@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import styles from "./Portfolio.module.css";
+// import styles from "./Portfolio.module.css";
 import { useParams } from "react-router-dom";
 
 import { db } from "../../firebase";
