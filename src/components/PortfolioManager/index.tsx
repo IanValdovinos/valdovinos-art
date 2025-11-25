@@ -1,60 +1,61 @@
 import React, { useEffect, useState } from "react";
 
 import { db } from "../../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
-
-interface Work {
-  id: string;
-  imageUrl: string;
-  title: string;
-  info?: string;
-  date?: string;
-  measurements?: string;
-  technique?: string;
-}
 
 interface PortfolioManagerProps {
   portfolioId: string;
 }
 
 const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
-  const [works, setWorks] = useState<Work[]>([]);
+  const [works, setWorks] = useState<Record<string, string>[]>([]);
+  const [parameters, setParameters] = useState<string[]>([]);
+  const [columns, setColumns] = useState<GridColDef[]>([]);
 
-  // Fetch works from a specific portfolio
+  // Fetch work data from Firestore
   useEffect(() => {
     const fetchWorks = async () => {
-      const querySnapshot = await getDocs(
+      // Fetch work parameters
+      const portfolioSnapshot = await getDoc(
+        doc(db, "portfolios", portfolioId)
+      );
+      const parameters = portfolioSnapshot.data()?.parameters;
+      setParameters(parameters);
+      setColumns(
+        parameters.map((param: string) => ({
+          field: param,
+          headerName: param.charAt(0).toUpperCase() + param.slice(1),
+          width: 150,
+        }))
+      );
+
+      // Fetch works in the selected portfolio
+      const worksSnapshot = await getDocs(
         collection(db, "portfolios", portfolioId, "works")
       );
 
-      setWorks(
-        querySnapshot.docs.map((doc) => ({
+      // Extract the values in the parameters constant for each work
+      const worksData = worksSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        const workEntry: Record<string, string> = {
           id: doc.id,
-          imageUrl: doc.data().image_url,
-          title: doc.data().title,
-          info: doc.data().info,
-          date: doc.data().date,
-          measurements: doc.data().measurements,
-          technique: doc.data().technique,
-        }))
-      );
+          image_url: data.image_url,
+        };
+        parameters.forEach((param: string) => {
+          workEntry[param] = data[param] || "";
+        });
+        return workEntry;
+      });
+
+      setWorks(worksData);
     };
 
     fetchWorks();
   }, [portfolioId]);
-
-  // Define columns for the DataGrid based on the Work interface
-  const columns: GridColDef[] = [
-    { field: "title", headerName: "Title", width: 200 },
-    { field: "info", headerName: "Info", width: 300 },
-    { field: "date", headerName: "Date", width: 150 },
-    { field: "measurements", headerName: "Measurements", width: 150 },
-    { field: "technique", headerName: "Technique", width: 150 },
-  ];
 
   return (
     <>
