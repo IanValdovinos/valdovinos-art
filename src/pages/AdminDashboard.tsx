@@ -17,6 +17,7 @@ import {
 import type { SelectChangeEvent } from "@mui/material";
 
 import PortfolioManager from "../components/PortfolioManager";
+import PortfolioDialog from "../components/PortfolioDialog";
 
 interface Portfolio {
   id: string;
@@ -29,6 +30,7 @@ const AdminDashboard = () => {
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(
     null
   );
+  const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   // Fetch portfolios from Firestore
@@ -67,12 +69,10 @@ const AdminDashboard = () => {
     <div className={styles.adminDashboard}>
       {/* Header */}
       <Typography variant="h3">Admin Dashboard</Typography>
-      <Button onClick={() => navigate("/")} variant="contained">
-        Home
-      </Button>
+      <Button onClick={() => navigate("/")}>Home</Button>
 
       {/* Portfolio Selection */}
-      <Box sx={{ mt: 4 }}>
+      <Box sx={{ mt: 4, display: "flex", gap: 2, alignItems: "center" }}>
         <FormControl>
           <InputLabel id="portfolio-select-label">Portfolio</InputLabel>
           <Select
@@ -90,6 +90,9 @@ const AdminDashboard = () => {
             ))}
           </Select>
         </FormControl>
+        <Button variant="outlined" onClick={() => setDialogOpen(true)}>
+          New Portfolio
+        </Button>
       </Box>
 
       {/* Portfolio Manager */}
@@ -99,6 +102,9 @@ const AdminDashboard = () => {
           <PortfolioManager portfolioId={selectedPortfolio.id} />
         </Box>
       )}
+
+      {/* Portfolio Dialog */}
+      <PortfolioDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
   );
 };

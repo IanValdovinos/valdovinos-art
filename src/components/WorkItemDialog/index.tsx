@@ -134,6 +134,11 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
     onClose();
   };
 
+  const isFormValid =
+    Object.values(formValues).every((value) => value.trim() !== "") &&
+    imageFile &&
+    !imageError;
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>Art Work Details</DialogTitle>
@@ -191,7 +196,12 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
         <Button color="primary" onClick={handleClose}>
           Cancel
         </Button>
-        <Button color="primary" variant="contained" onClick={handleSave}>
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={handleSave}
+          disabled={!isFormValid}
+        >
           Save
         </Button>
       </DialogActions>
