@@ -13,13 +13,16 @@ import {
   Select,
   MenuItem,
   Box,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import type { SnackbarCloseReason } from "@mui/material/Snackbar";
 import type { SelectChangeEvent } from "@mui/material";
 
 import PortfolioManager from "../components/PortfolioManager";
 import PortfolioDialog from "../components/PortfolioDialog";
 
-interface Portfolio {
+export interface Portfolio {
   id: string;
   imageUrl: string;
   title: string;
@@ -31,6 +34,11 @@ const AdminDashboard = () => {
     null
   );
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
   const navigate = useNavigate();
 
   // Fetch portfolios from Firestore
@@ -56,13 +64,31 @@ const AdminDashboard = () => {
     };
 
     fetchPortfolios();
-  }, []);
+  }, [selectedPortfolio]);
 
   // Handle portfolio selection
   const handlePortfolioChange = (event: SelectChangeEvent) => {
     const selectedId = event.target.value;
     const portfolio = portfolios.find((p) => p.id === selectedId);
     setSelectedPortfolio(portfolio || null);
+  };
+
+  const handleSnackbarClose = (
+    event: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  const handleDialogSave = (newPortfolio: Portfolio) => {
+    setSelectedPortfolio(newPortfolio);
+    setSnackbarMessage("Portfolio created successfully!");
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
+    setDialogOpen(false);
   };
 
   return (
@@ -104,7 +130,27 @@ const AdminDashboard = () => {
       )}
 
       {/* Portfolio Dialog */}
-      <PortfolioDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <PortfolioDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSave={handleDialogSave}
+      />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

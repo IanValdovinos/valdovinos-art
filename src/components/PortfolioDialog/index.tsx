@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import {
   Button,
   TextField,
@@ -10,15 +11,26 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+
+import { storage } from "../../firebase";
+import { db } from "../../firebase";
+import { setDoc, doc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+import { type Portfolio } from "../../pages/AdminDashboard";
 
 interface PortfolioDialogProps {
   open: boolean;
   onClose: () => void;
+  onSave?: (newPortfolio: Portfolio) => void;
 }
 
-const PortfolioDialog: React.FC<PortfolioDialogProps> = ({ open, onClose }) => {
+const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
+  open,
+  onClose,
+  onSave,
+}) => {
   const [title, setTitle] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [parameterCount, setParameterCount] = useState(0);
@@ -38,6 +50,7 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({ open, onClose }) => {
     }
   }, [open]);
 
+  // Handle image file selection
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -46,12 +59,14 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({ open, onClose }) => {
     }
   };
 
+  // Handle parameter input change
   const handleParameterChange = (index: number, value: string) => {
     const updatedParameters = [...parameters];
     updatedParameters[index] = value;
     setParameters(updatedParameters);
   };
 
+  // Validate form inputs
   const validateForm = () => {
     let isValid = true;
 
@@ -77,52 +92,44 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({ open, onClose }) => {
     return isValid;
   };
 
-  const handleSubmit = () => {
+  // Handle form submission
+  const handleSubmit = async () => {
     // Validate form
     if (!validateForm()) {
       return;
     }
 
-    // Filter out empty parameters and format them (lowercase, spaces to underscores)
-    const validParameters = parameters
-      .filter((param) => param.trim() !== "")
-      .map((param) => param.trim().toLowerCase().replace(/\s+/g, "_"));
+    try {
+      // Filter out empty parameters and format them (lowercase, spaces to underscores)
+      const validParameters = parameters
+        .filter((param) => param.trim() !== "")
+        .map((param) => param.trim().toLowerCase().replace(/\s+/g, "_"));
+      validParameters.unshift("title");
 
-    // Create portfolio data object
-    const portfolioData = {
-      title: title.trim(),
-      coverImage: {
-        name: coverImage!.name,
-        size: coverImage!.size,
-        type: coverImage!.type,
-      },
-      parameters: validParameters,
-      createdAt: new Date().toISOString(),
-    };
+      // Upload cover image to Firebase Storage
+      const storageRef = ref(storage, `Portfolio Covers/${coverImage!.name}`);
+      await uploadBytes(storageRef, coverImage!);
+      const image_url = await getDownloadURL(storageRef);
 
-    // Log the data for debugging
-    console.log("Portfolio Data:", portfolioData);
+      // Save portfolio data to Firestore
+      const portfolioData = {
+        title: title.trim(),
+        image_url: image_url,
+        parameters: validParameters,
+      };
 
-    // Show alert with portfolio details
-    const parameterText =
-      validParameters.length > 0
-        ? `\nParameters: ${validParameters.join(", ")}`
-        : "\nNo parameters added";
+      await setDoc(doc(db, "portfolios", title.trim()), portfolioData);
 
-    alert(
-      `Portfolio Created Successfully!\n\n` +
-        `Title: ${portfolioData.title}\n` +
-        `Cover Image: ${portfolioData.coverImage.name} (${(
-          portfolioData.coverImage.size / 1024
-        ).toFixed(2)} KB)` +
-        parameterText +
-        `\n\nCreated: ${new Date(portfolioData.createdAt).toLocaleString()}`
-    );
-
-    // TODO: Implement Firebase save functionality here
-    // Example: await savePortfolioToFirebase(portfolioData);
-
-    onClose();
+      if (onSave) {
+        onSave({
+          id: title.trim(),
+          imageUrl: image_url,
+          title: title.trim(),
+        });
+      }
+    } catch (error) {
+      alert(`Error saving portfolio: ${(error as Error).message}`);
+    }
   };
 
   const isFormValid = title.trim().length >= 3 && coverImage;
