@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 
 import { db } from "../../firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  deleteDoc,
+} from "firebase/firestore";
 
 import {
   Dialog,
@@ -19,9 +25,13 @@ import WorkItemDialog from "../WorkItemDialog";
 
 interface PortfolioManagerProps {
   portfolioId: string;
+  onPortfolioDeleted: (portfolioId: string) => void;
 }
 
-const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
+const PortfolioManager: React.FC<PortfolioManagerProps> = ({
+  portfolioId,
+  onPortfolioDeleted,
+}) => {
   const [works, setWorks] = useState<Record<string, string>[]>([]);
   const [parameters, setParameters] = useState<string[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
@@ -76,8 +86,12 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
 
   const handleDeletePortfolio = () => {
     // Implement portfolio deletion logic here
-    alert("Portfolio deleted successfully!");
+    const deletePortfolio = async () => {
+      await deleteDoc(doc(db, "portfolios", portfolioId));
+    };
+    deletePortfolio();
     setDeleteDialogOpen(false);
+    onPortfolioDeleted(portfolioId);
   };
 
   return (

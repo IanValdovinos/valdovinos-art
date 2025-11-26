@@ -53,14 +53,6 @@ const AdminDashboard = () => {
           title: doc.data().title,
         }))
       );
-
-      if (querySnapshot.docs.length > 0) {
-        setSelectedPortfolio({
-          id: querySnapshot.docs[0].id,
-          imageUrl: querySnapshot.docs[0].data().image_url,
-          title: querySnapshot.docs[0].data().title,
-        });
-      }
     };
 
     fetchPortfolios();
@@ -90,6 +82,18 @@ const AdminDashboard = () => {
     setSnackbarSeverity("success");
     setSnackbarOpen(true);
     setDialogOpen(false);
+  };
+
+  const handlePortfolioDeleted = (deletedPortfolioId: string) => {
+    setPortfolios((prevPortfolios) =>
+      prevPortfolios.filter((p) => p.id !== deletedPortfolioId)
+    );
+    if (selectedPortfolio?.id === deletedPortfolioId) {
+      setSelectedPortfolio(null);
+    }
+    setSnackbarMessage("Portfolio deleted successfully!");
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
   };
 
   return (
@@ -126,7 +130,10 @@ const AdminDashboard = () => {
       {selectedPortfolio && (
         <Box sx={{ mt: 4 }}>
           <Typography variant="h4">{selectedPortfolio.title}</Typography>
-          <PortfolioManager portfolioId={selectedPortfolio.id} />
+          <PortfolioManager
+            portfolioId={selectedPortfolio.id}
+            onPortfolioDeleted={handlePortfolioDeleted}
+          />
         </Box>
       )}
 
