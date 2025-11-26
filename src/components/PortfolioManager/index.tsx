@@ -7,6 +7,9 @@ import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 
+// Import components
+import WorkItemDialog from "../WorkItemDialog";
+
 interface PortfolioManagerProps {
   portfolioId: string;
 }
@@ -15,6 +18,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
   const [works, setWorks] = useState<Record<string, string>[]>([]);
   const [parameters, setParameters] = useState<string[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch work data from Firestore
   useEffect(() => {
@@ -57,6 +61,11 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
     fetchWorks();
   }, [portfolioId]);
 
+  const handleWorkAdded = () => {
+    alert("Work item added successfully!");
+    setDialogOpen(false);
+  };
+
   return (
     <>
       {/* Data Grid for Works */}
@@ -65,9 +74,22 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
       </div>
 
       {/* New Work Button */}
-      <Button variant="contained" color="primary" style={{ marginTop: "20px" }}>
+      <Button
+        variant="contained"
+        color="primary"
+        style={{ marginTop: "20px" }}
+        onClick={() => setDialogOpen(true)}
+      >
         Add New Work
       </Button>
+
+      {/* Work Item Dialog */}
+      <WorkItemDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onWorkAdded={handleWorkAdded}
+        parameters={parameters}
+      />
     </>
   );
 };
