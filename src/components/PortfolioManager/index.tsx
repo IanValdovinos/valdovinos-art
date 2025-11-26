@@ -3,9 +3,16 @@ import React, { useEffect, useState } from "react";
 import { db } from "../../firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  DialogContentText,
+  Button,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
 
 // Import components
 import WorkItemDialog from "../WorkItemDialog";
@@ -19,6 +26,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
   const [parameters, setParameters] = useState<string[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch work data from Firestore
   useEffect(() => {
@@ -66,8 +74,24 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
     setDialogOpen(false);
   };
 
+  const handleDeletePortfolio = () => {
+    // Implement portfolio deletion logic here
+    alert("Portfolio deleted successfully!");
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <>
+      <Button
+        sx={{ mt: 2 }}
+        variant="outlined"
+        color="error"
+        style={{ marginBottom: 20 }}
+        onClick={() => setDeleteDialogOpen(true)}
+      >
+        Delete Portfolio
+      </Button>
+
       {/* Data Grid for Works */}
       <div style={{ height: 300, width: "100%" }}>
         <DataGrid rows={works} columns={columns} />
@@ -90,6 +114,32 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({ portfolioId }) => {
         onWorkAdded={handleWorkAdded}
         parameters={parameters}
       />
+
+      {/* Delete Portfolio Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen} // Replace with state to control dialog visibility
+        onClose={() => setDeleteDialogOpen(false)} // Replace with handler to close dialog
+      >
+        <DialogTitle>Delete "{portfolioId}"</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete "{portfolioId}"? This action cannot
+            be undone. All art works within this portfolio will also be deleted.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeletePortfolio}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

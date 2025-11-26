@@ -64,7 +64,7 @@ const AdminDashboard = () => {
     };
 
     fetchPortfolios();
-  }, [selectedPortfolio]);
+  }, []);
 
   // Handle portfolio selection
   const handlePortfolioChange = (event: SelectChangeEvent) => {
@@ -84,6 +84,7 @@ const AdminDashboard = () => {
   };
 
   const handleDialogSave = (newPortfolio: Portfolio) => {
+    setPortfolios((prevPortfolios) => [...prevPortfolios, newPortfolio]);
     setSelectedPortfolio(newPortfolio);
     setSnackbarMessage("Portfolio created successfully!");
     setSnackbarSeverity("success");
