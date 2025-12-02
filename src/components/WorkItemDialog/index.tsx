@@ -12,8 +12,12 @@ import {
 interface WorkItemDialogProps {
   open: boolean;
   onClose: () => void;
-  onWorkAdded: (formData: Record<string, string>, imageFile?: File) => void;
+  onWorkAdded: (
+    parameterMap: Record<string, string>,
+    imageFile: File
+  ) => Promise<void>;
   parameters?: string[];
+  loading?: boolean;
 }
 
 const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
@@ -21,6 +25,7 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
   onClose,
   onWorkAdded,
   parameters,
+  loading,
 }) => {
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -78,14 +83,6 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
         return;
       }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      if (file.size > maxSize) {
-        setImageError("Image file size must be less than 5MB");
-        setImageFile(null);
-        return;
-      }
-
       setImageFile(file);
       setImageError("");
     }
@@ -118,9 +115,9 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
     return isValid;
   };
 
-  const handleSave = () => {
-    if (validateForm()) {
-      onWorkAdded(formValues, imageFile || undefined);
+  const handleSave = async () => {
+    if (validateForm() && imageFile) {
+      await onWorkAdded(formValues, imageFile);
       handleClose();
     }
   };
@@ -193,7 +190,11 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
         </form>
       </DialogContent>
       <DialogActions>
-        <Button color="primary" onClick={handleClose}>
+        <Button
+          color="primary"
+          onClick={handleClose}
+          disabled={loading ? true : false}
+        >
           Cancel
         </Button>
         <Button
@@ -201,6 +202,7 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
           variant="contained"
           onClick={handleSave}
           disabled={!isFormValid}
+          loading={loading ? true : false}
         >
           Save
         </Button>

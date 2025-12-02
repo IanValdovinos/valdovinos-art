@@ -118,7 +118,6 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
       const storageRef = ref(storage, `Portfolio Covers/${coverImage!.name}`);
       const compressedImage = await compressImage(coverImage!, "good");
       await uploadBytes(storageRef, compressedImage);
-      // await uploadBytes(storageRef, coverImage!);
       const image_url = await getDownloadURL(storageRef);
 
       // Save portfolio data to Firestore
@@ -142,8 +141,6 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
     }
     setIsLoading(false);
   };
-
-  const isFormValid = title.trim().length >= 3 && coverImage;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">

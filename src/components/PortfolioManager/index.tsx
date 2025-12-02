@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+import { storage } from "../../firebase";
 import { db } from "../../firebase";
 import {
   collection,
@@ -7,7 +8,9 @@ import {
   doc,
   getDoc,
   deleteDoc,
+  setDoc,
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import {
   Dialog,
@@ -16,9 +19,15 @@ import {
   DialogTitle,
   DialogContentText,
   Button,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import type { SnackbarCloseReason } from "@mui/material/Snackbar";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
+
+// Import utilities
+import { compressImage } from "../../utils/image_utils";
 
 // Import components
 import WorkItemDialog from "../WorkItemDialog";
@@ -37,6 +46,12 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
 
   // Fetch work data from Firestore
   useEffect(() => {
@@ -79,8 +94,65 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
     fetchWorks();
   }, [portfolioId]);
 
-  const handleWorkAdded = () => {
-    alert("Work item added successfully!");
+  const handleSnackbarClose = (
+    event: React.SyntheticEvent | Event,
+    reason?: SnackbarCloseReason
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  const handleWorkAdded = async (
+    parameterMap: Record<string, string>,
+    imageFile: File
+  ) => {
+    setLoading(true);
+    try {
+      // Upload art work image to Firestore
+      const compressedImage = await compressImage(imageFile, "good");
+      const [originalImageStorageRef, thumbnailImageStorageRef] = [
+        ref(storage, `Collection Images/${portfolioId}/${imageFile.name}`),
+        ref(
+          storage,
+          `Collection Images/${portfolioId}/thumbnails/${imageFile.name}`
+        ),
+      ];
+      await uploadBytes(thumbnailImageStorageRef, compressedImage);
+      await uploadBytes(originalImageStorageRef, compressedImage);
+      const originalImageUrl = await getDownloadURL(originalImageStorageRef);
+      const thumbnailImageUrl = await getDownloadURL(thumbnailImageStorageRef);
+
+      // Save work data to Firestore
+      const workData = {
+        ...parameterMap,
+        image_url: originalImageUrl,
+        thumbnail_url: thumbnailImageUrl,
+      };
+
+      await setDoc(
+        doc(db, "portfolios", portfolioId, "works", parameterMap["title"]),
+        workData
+      );
+
+      // Update local state
+      const workDataWithId = {
+        id: parameterMap["title"], // Use title as the id (same as the document ID)
+        ...workData,
+      };
+      setWorks((prevWorks) => [...prevWorks, workDataWithId]);
+
+      setSnackbarMessage("Work added successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage(`Error adding work: ${(error as Error).message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+    setLoading(false);
     setDialogOpen(false);
   };
 
@@ -127,6 +199,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
         onClose={() => setDialogOpen(false)}
         onWorkAdded={handleWorkAdded}
         parameters={parameters}
+        loading={loading}
       />
 
       {/* Delete Portfolio Confirmation Dialog */}
@@ -154,6 +227,22 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

@@ -32,7 +32,7 @@ function Portfolio() {
       setWorks(
         querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          imageUrl: doc.data().image_url,
+          imageUrl: doc.data().thumbnail_url,
           title: doc.data().title,
           date: doc.data().date,
           measurements: doc.data().measurements,
