@@ -156,14 +156,33 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
     setDialogOpen(false);
   };
 
-  const handleDeletePortfolio = () => {
-    // Implement portfolio deletion logic here
-    const deletePortfolio = async () => {
+  const handleDeletePortfolio = async () => {
+    setLoading(true);
+    try {
+      // First, delete all documents in the works subcollection
+      const worksSnapshot = await getDocs(
+        collection(db, "portfolios", portfolioId, "works")
+      );
+
+      // Delete each work document
+      const deletePromises = worksSnapshot.docs.map((workDoc) =>
+        deleteDoc(workDoc.ref)
+      );
+      await Promise.all(deletePromises);
+
+      // Then delete the portfolio document itself
       await deleteDoc(doc(db, "portfolios", portfolioId));
-    };
-    deletePortfolio();
+
+      onPortfolioDeleted(portfolioId);
+    } catch (error) {
+      setSnackbarMessage(
+        `Error deleting portfolio: ${(error as Error).message}`
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+    setLoading(false);
     setDeleteDialogOpen(false);
-    onPortfolioDeleted(portfolioId);
   };
 
   return (
@@ -215,13 +234,18 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            color="inherit"
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleDeletePortfolio}
             color="error"
             variant="contained"
+            loading={loading}
           >
             Delete
           </Button>
