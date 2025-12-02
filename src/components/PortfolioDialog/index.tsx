@@ -42,6 +42,7 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
   const [parameters, setParameters] = useState<string[]>([]);
   const [titleError, setTitleError] = useState("");
   const [imageError, setImageError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -99,8 +100,10 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
 
   // Handle form submission
   const handleSubmit = async () => {
+    setIsLoading(true);
     // Validate form
     if (!validateForm()) {
+      setIsLoading(false);
       return;
     }
 
@@ -137,6 +140,7 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
     } catch (error) {
       alert(`Error saving portfolio: ${(error as Error).message}`);
     }
+    setIsLoading(false);
   };
 
   const isFormValid = title.trim().length >= 3 && coverImage;
@@ -233,13 +237,13 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="inherit">
+        <Button onClick={onClose} color="inherit" disabled={isLoading}>
           Cancel
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={!isFormValid}
+          loading={isLoading ? true : false}
           color="primary"
         >
           Save
