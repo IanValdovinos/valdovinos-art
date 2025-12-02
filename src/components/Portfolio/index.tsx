@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-// import styles from "./Portfolio.module.css";
+import styles from "./Portfolio.module.css";
 import { useParams } from "react-router-dom";
 
 import { db } from "../../firebase";
@@ -45,7 +45,7 @@ function Portfolio() {
   }, [portfolioId]);
 
   return (
-    <div>
+    <div className={styles.portfolioContainer}>
       {works.map((work) => (
         <WorkCard
           key={work.id}
