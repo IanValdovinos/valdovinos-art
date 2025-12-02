@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 
+// Import MUI components
 import {
   Button,
   TextField,
@@ -13,10 +14,14 @@ import {
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
+// Import Firebase
 import { storage } from "../../firebase";
 import { db } from "../../firebase";
 import { setDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+// Import utilities
+import { compressImage } from "../../utils/image_utils";
 
 import { type Portfolio } from "../../pages/AdminDashboard";
 
@@ -108,7 +113,9 @@ const PortfolioDialog: React.FC<PortfolioDialogProps> = ({
 
       // Upload cover image to Firebase Storage
       const storageRef = ref(storage, `Portfolio Covers/${coverImage!.name}`);
-      await uploadBytes(storageRef, coverImage!);
+      const compressedImage = await compressImage(coverImage!, "good");
+      await uploadBytes(storageRef, compressedImage);
+      // await uploadBytes(storageRef, coverImage!);
       const image_url = await getDownloadURL(storageRef);
 
       // Save portfolio data to Firestore
