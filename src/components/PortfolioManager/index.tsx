@@ -26,10 +26,12 @@ import {
   Button,
   Snackbar,
   Alert,
+  IconButton,
 } from "@mui/material";
 import type { SnackbarCloseReason } from "@mui/material/Snackbar";
 import { DataGrid } from "@mui/x-data-grid";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { Edit, Delete } from "@mui/icons-material";
 
 // Import utilities
 import { compressImage } from "../../utils/image_utils";
@@ -51,6 +53,8 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteWorkDialogOpen, setDeleteWorkDialogOpen] = useState(false);
+  const [workToDelete, setWorkToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -67,13 +71,40 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
       );
       const parameters = portfolioSnapshot.data()?.parameters;
       setParameters(parameters);
-      setColumns(
-        parameters.map((param: string) => ({
-          field: param,
-          headerName: param.charAt(0).toUpperCase() + param.slice(1),
-          width: 150,
-        }))
-      );
+
+      // Create columns with Actions column first
+      const actionColumn: GridColDef = {
+        field: "actions",
+        headerName: "Actions",
+        width: 120,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <div>
+            <IconButton
+              onClick={() => handleEditWork(params.row)}
+              color="primary"
+              size="small"
+            >
+              <Edit />
+            </IconButton>
+            <IconButton
+              onClick={() => handleDeleteWork(params.row.id)}
+              color="error"
+              size="small"
+            >
+              <Delete />
+            </IconButton>
+          </div>
+        ),
+      };
+
+      const parameterColumns = parameters.map((param: string) => ({
+        field: param,
+        headerName: param.charAt(0).toUpperCase() + param.slice(1),
+        width: 150,
+      }));
+
+      setColumns([actionColumn, ...parameterColumns]);
 
       // Fetch works in the selected portfolio
       const worksSnapshot = await getDocs(
@@ -107,6 +138,64 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
       return;
     }
     setSnackbarOpen(false);
+  };
+
+  // Placeholder event handlers
+  const handleEditWork = (work: Record<string, string>) => {
+    console.log("Edit work:", work);
+    // TODO: Implement edit functionality
+  };
+
+  const handleDeleteWork = (workId: string) => {
+    setWorkToDelete(workId);
+    setDeleteWorkDialogOpen(true);
+  };
+
+  const confirmDeleteWork = async () => {
+    if (!workToDelete) return;
+
+    setLoading(true);
+    try {
+      // Get the work data to access image URLs
+      const workDoc = await getDoc(
+        doc(db, "portfolios", portfolioId, "works", workToDelete)
+      );
+      if (workDoc.exists()) {
+        const workData = workDoc.data();
+
+        // Delete images from Storage
+        if (workData.image_url) {
+          const imageRef = ref(storage, workData.image_url);
+          await deleteObject(imageRef);
+        }
+        if (workData.thumbnail_url) {
+          const thumbnailRef = ref(storage, workData.thumbnail_url);
+          await deleteObject(thumbnailRef);
+        }
+      }
+
+      // Delete the work document from Firestore
+      await deleteDoc(
+        doc(db, "portfolios", portfolioId, "works", workToDelete)
+      );
+
+      // Update local state
+      setWorks((prevWorks) =>
+        prevWorks.filter((work) => work.id !== workToDelete)
+      );
+
+      setSnackbarMessage("Work deleted successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage(`Error deleting work: ${(error as Error).message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+
+    setLoading(false);
+    setDeleteWorkDialogOpen(false);
+    setWorkToDelete(null);
   };
 
   const handleWorkAdded = async (
@@ -261,6 +350,40 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
           </Button>
           <Button
             onClick={handleDeletePortfolio}
+            color="error"
+            variant="contained"
+            loading={loading}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Art Work Confirmation Dialog */}
+      <Dialog
+        open={deleteWorkDialogOpen}
+        onClose={() => setDeleteWorkDialogOpen(false)}
+      >
+        <DialogTitle>Delete Art Work</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete "{workToDelete}"? This action cannot
+            be undone. The artwork images will also be permanently deleted.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDeleteWorkDialogOpen(false);
+              setWorkToDelete(null);
+            }}
+            color="inherit"
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDeleteWork}
             color="error"
             variant="contained"
             loading={loading}
