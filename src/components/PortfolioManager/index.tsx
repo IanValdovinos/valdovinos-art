@@ -136,7 +136,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
   }, [portfolioId]);
 
   const handleSnackbarClose = (
-    event: React.SyntheticEvent | Event,
+    _event: React.SyntheticEvent | Event,
     reason?: SnackbarCloseReason
   ) => {
     if (reason === "clickaway") {
@@ -257,7 +257,7 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
 
   const handleWorkEdited = async (
     parameterMap: Record<string, string>,
-    imageFile: File
+    _imageFile: File
   ) => {
     if (!editingWork) return;
 
