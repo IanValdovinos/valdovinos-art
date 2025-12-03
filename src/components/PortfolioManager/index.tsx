@@ -9,6 +9,7 @@ import {
   getDoc,
   deleteDoc,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
   ref,
@@ -52,6 +53,10 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
   const [parameters, setParameters] = useState<string[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingWork, setEditingWork] = useState<Record<string, string> | null>(
+    null
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteWorkDialogOpen, setDeleteWorkDialogOpen] = useState(false);
   const [workToDelete, setWorkToDelete] = useState<string | null>(null);
@@ -140,10 +145,10 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
     setSnackbarOpen(false);
   };
 
-  // Placeholder event handlers
+  // Handle edit work functionality
   const handleEditWork = (work: Record<string, string>) => {
-    console.log("Edit work:", work);
-    // TODO: Implement edit functionality
+    setEditingWork(work);
+    setEditDialogOpen(true);
   };
 
   const handleDeleteWork = (workId: string) => {
@@ -250,6 +255,52 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
     setDialogOpen(false);
   };
 
+  const handleWorkEdited = async (
+    parameterMap: Record<string, string>,
+    imageFile: File
+  ) => {
+    if (!editingWork) return;
+
+    setLoading(true);
+    try {
+      // Keep existing images - only update text parameters
+      // Filter out undefined values to avoid Firestore errors
+      const workData: Record<string, string> = {
+        ...parameterMap,
+      };
+
+      // Update work data in Firestore
+      await updateDoc(
+        doc(db, "portfolios", portfolioId, "works", editingWork.id),
+        workData
+      );
+
+      // Update local state
+      const updatedWorkWithId = {
+        id: editingWork.id,
+        ...workData,
+      };
+
+      setWorks((prevWorks) =>
+        prevWorks.map((work) =>
+          work.id === editingWork.id ? updatedWorkWithId : work
+        )
+      );
+
+      setSnackbarMessage("Work updated successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage(`Error updating work: ${(error as Error).message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+    setLoading(false);
+    setEditDialogOpen(false);
+    setEditingWork(null);
+  };
+
   const handleDeletePortfolio = async () => {
     setLoading(true);
     try {
@@ -263,7 +314,6 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
         // Delete art work images from Storage
         const imageUrl = workDoc.data().image_url;
         const thumbnailUrl = workDoc.data().thumbnail_url;
-        console.log("Deleting images:", imageUrl, thumbnailUrl);
         const imageRef = ref(storage, imageUrl);
         await deleteObject(imageRef);
         const thumbnailRef = ref(storage, thumbnailUrl);
@@ -326,6 +376,19 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
         onWorkAdded={handleWorkAdded}
         parameters={parameters}
         loading={loading}
+      />
+
+      {/* Edit Work Item Dialog */}
+      <WorkItemDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setEditingWork(null);
+        }}
+        onWorkAdded={handleWorkEdited}
+        parameters={parameters}
+        loading={loading}
+        initialValues={editingWork || undefined}
       />
 
       {/* Delete Portfolio Confirmation Dialog */}

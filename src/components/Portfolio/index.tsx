@@ -26,9 +26,6 @@ function Portfolio() {
       const querySnapshot = await getDocs(
         collection(db, "portfolios", portfolioId!, "works")
       );
-      querySnapshot.forEach((doc) => {
-        console.log(`${doc.id} => ${doc.data()}`);
-      });
       setWorks(
         querySnapshot.docs.map((doc) => ({
           id: doc.id,

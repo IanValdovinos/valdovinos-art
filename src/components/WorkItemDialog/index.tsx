@@ -18,6 +18,7 @@ interface WorkItemDialogProps {
   ) => Promise<void>;
   parameters?: string[];
   loading?: boolean;
+  initialValues?: Record<string, string>;
 }
 
 const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
@@ -26,7 +27,9 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
   onWorkAdded,
   parameters,
   loading,
+  initialValues,
 }) => {
+  const isEditMode = Boolean(initialValues);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -34,17 +37,24 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
 
   useEffect(() => {
     // Initialize form values when parameters change
-    const initialValues: Record<string, string> = {};
+    const formValues: Record<string, string> = {};
     const initialErrors: Record<string, string> = {};
 
     (parameters || []).forEach((param) => {
-      initialValues[param] = "";
+      // Use initial values if in edit mode, otherwise use empty string
+      formValues[param] = isEditMode ? initialValues?.[param] || "" : "";
       initialErrors[param] = "";
     });
 
-    setFormValues(initialValues);
+    setFormValues(formValues);
     setFormErrors(initialErrors);
-  }, [parameters]);
+
+    // Clear image file when switching modes or parameters change
+    if (!isEditMode) {
+      setImageFile(null);
+      setImageError("");
+    }
+  }, [parameters, initialValues, isEditMode]);
 
   // Handle input changes
   const handleInputChange =
@@ -103,8 +113,8 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
       }
     });
 
-    // Validate image file
-    if (!imageFile) {
+    // Validate image file (only required for new works, not edits)
+    if (!isEditMode && !imageFile) {
       setImageError("Please select an image file");
       isValid = false;
     } else if (imageError) {
@@ -116,8 +126,13 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
   };
 
   const handleSave = async () => {
-    if (validateForm() && imageFile) {
-      await onWorkAdded(formValues, imageFile);
+    if (validateForm()) {
+      // For edit mode, don't pass imageFile since image editing is not allowed
+      // For create mode, imageFile is required and validated
+      const fileToPass = isEditMode
+        ? new File([], "", { type: "image/jpeg" })
+        : imageFile!;
+      await onWorkAdded(formValues, fileToPass);
       handleClose();
     }
   };
@@ -133,15 +148,18 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
 
   const isFormValid =
     Object.values(formValues).every((value) => value.trim() !== "") &&
-    imageFile &&
-    !imageError;
+    (isEditMode || imageFile);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>Art Work Details</DialogTitle>
+      <DialogTitle>
+        {isEditMode ? "Edit Art Work" : "Art Work Details"}
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Enter the details for the art work.
+          {isEditMode
+            ? "Update the details for the art work."
+            : "Enter the details for the art work."}
         </DialogContentText>
         <form autoComplete="off">
           {(parameters || []).map((param, index) => (
@@ -163,30 +181,32 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
             />
           ))}
 
-          {/* Image file input */}
-          <TextField
-            required
-            margin="dense"
-            id="image-upload"
-            name="image"
-            label="Select Image"
-            type="file"
-            fullWidth
-            variant="standard"
-            onChange={handleImageChange}
-            error={!!imageError}
-            helperText={
-              imageError ||
-              (imageFile
-                ? `Selected: ${imageFile.name}`
-                : "Choose an image file")
-            }
-            slotProps={{
-              htmlInput: {
-                accept: "image/*",
-              },
-            }}
-          />
+          {/* Image file input - only show in create mode */}
+          {!isEditMode && (
+            <TextField
+              required
+              margin="dense"
+              id="image-upload"
+              name="image"
+              label="Select Image"
+              type="file"
+              fullWidth
+              variant="standard"
+              onChange={handleImageChange}
+              error={!!imageError}
+              helperText={
+                imageError ||
+                (imageFile
+                  ? `Selected: ${imageFile.name}`
+                  : "Choose an image file")
+              }
+              slotProps={{
+                htmlInput: {
+                  accept: "image/*",
+                },
+              }}
+            />
+          )}
         </form>
       </DialogContent>
       <DialogActions>
@@ -204,7 +224,7 @@ const WorkItemDialog: React.FC<WorkItemDialogProps> = ({
           disabled={!isFormValid}
           loading={loading ? true : false}
         >
-          Save
+          {isEditMode ? "Update" : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
