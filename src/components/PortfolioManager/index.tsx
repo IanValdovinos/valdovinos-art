@@ -10,7 +10,12 @@ import {
   deleteDoc,
   setDoc,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 import {
   Dialog,
@@ -163,6 +168,19 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
       const worksSnapshot = await getDocs(
         collection(db, "portfolios", portfolioId, "works")
       );
+
+      // Delete Storage files associated with each work
+      const deleteStoragePromises = worksSnapshot.docs.map(async (workDoc) => {
+        // Delete art work images from Storage
+        const imageUrl = workDoc.data().image_url;
+        const thumbnailUrl = workDoc.data().thumbnail_url;
+        console.log("Deleting images:", imageUrl, thumbnailUrl);
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+        const thumbnailRef = ref(storage, thumbnailUrl);
+        await deleteObject(thumbnailRef);
+      });
+      await Promise.all(deleteStoragePromises);
 
       // Delete each work document
       const deletePromises = worksSnapshot.docs.map((workDoc) =>
