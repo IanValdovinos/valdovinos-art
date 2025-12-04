@@ -4,9 +4,10 @@ import styles from "./WorkCard.module.css";
 interface WorkCardProps {
   data: Record<string, string>;
   parameters: string[];
+  onClick?: (work: Record<string, string>) => void;
 }
 
-function WorkCard({ data, parameters }: WorkCardProps) {
+function WorkCard({ data, parameters, onClick }: WorkCardProps) {
   const [descriptionItems, setDescriptionItems] = useState<string[]>([]);
 
   useEffect(() => {
@@ -20,7 +21,7 @@ function WorkCard({ data, parameters }: WorkCardProps) {
   }, [parameters, data]);
 
   return (
-    <div className={styles.workCard}>
+    <div className={styles.workCard} onClick={() => onClick && onClick(data)}>
       <div className={styles.imageContainer}>
         <img src={data.image_url} alt={data.title} className={styles.image} />
       </div>

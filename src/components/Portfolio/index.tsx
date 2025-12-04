@@ -6,10 +6,13 @@ import { db } from "../../firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
 import WorkCard from "../WorkCard";
+import WorkInspector from "../WorkInspector";
 
 function Portfolio() {
   const [works, setWorks] = useState<Record<string, string>[]>([]);
   const [workParameters, setWorkParameters] = useState<string[]>([]);
+  const [selectedWork, setSelectedWork] = useState<Record<string, string>>();
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const params = useParams();
   const portfolioId = params.pid;
 
@@ -32,12 +35,30 @@ function Portfolio() {
     fetchWorkParameters();
   }, [portfolioId]);
 
+  const handleWorkSelected = (work: Record<string, string>) => {
+    setSelectedWork(work);
+    setInspectorOpen(true);
+  };
+
   return (
-    <div className={styles.portfolioContainer}>
-      {works.map((work) => (
-        <WorkCard key={work.title} data={work} parameters={workParameters} />
-      ))}
-    </div>
+    <>
+      <div className={styles.portfolioContainer}>
+        {works.map((work) => (
+          <WorkCard
+            key={work.title}
+            data={work}
+            parameters={workParameters}
+            onClick={handleWorkSelected}
+          />
+        ))}
+      </div>
+
+      <WorkInspector
+        open={inspectorOpen}
+        onClose={() => setInspectorOpen(false)}
+        workData={selectedWork}
+      />
+    </>
   );
 }
 
