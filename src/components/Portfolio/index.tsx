@@ -3,55 +3,39 @@ import styles from "./Portfolio.module.css";
 import { useParams } from "react-router-dom";
 
 import { db } from "../../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
 import WorkCard from "../WorkCard";
 
-interface Work {
-  id: string;
-  imageUrl: string;
-  title: string;
-  date: string;
-  measurements: string;
-  technique: string;
-}
-
 function Portfolio() {
-  const [works, setWorks] = useState<Work[]>([]);
+  const [works, setWorks] = useState<Record<string, string>[]>([]);
+  const [workParameters, setWorkParameters] = useState<string[]>([]);
   const params = useParams();
   const portfolioId = params.pid;
 
+  // Fetch works from Firestore
   useEffect(() => {
     const fetchWorks = async () => {
       const querySnapshot = await getDocs(
         collection(db, "portfolios", portfolioId!, "works")
       );
-      setWorks(
-        querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          imageUrl: doc.data().thumbnail_url,
-          title: doc.data().title,
-          date: doc.data().date,
-          measurements: doc.data().measurements,
-          technique: doc.data().technique,
-        }))
-      );
+
+      setWorks(querySnapshot.docs.map((doc) => doc.data()));
+    };
+
+    const fetchWorkParameters = async () => {
+      const querySnapshot = await getDoc(doc(db, "portfolios", portfolioId!));
+      setWorkParameters(querySnapshot.data()?.work_parameters || []);
     };
 
     fetchWorks();
+    fetchWorkParameters();
   }, [portfolioId]);
 
   return (
     <div className={styles.portfolioContainer}>
       {works.map((work) => (
-        <WorkCard
-          key={work.id}
-          title={work.title}
-          imageUrl={work.imageUrl}
-          date={work.date}
-          measurements={work.measurements}
-          technique={work.technique}
-        />
+        <WorkCard key={work.title} data={work} />
       ))}
     </div>
   );

@@ -33,19 +33,6 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.technique,
-.measurements,
-.date {
-  font-size: 0.9rem;
-  color: #b0b0b0;
-  margin: 4px 0;
-  line-height: 1.4;
-}
-
 .description {
-  font-size: 0.85rem;
-  color: #888888;
-  margin: 12px 0 0 0;
-  line-height: 1.5;
-  font-style: italic;
+  margin: 0.5rem 0;
 }

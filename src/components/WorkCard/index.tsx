@@ -1,32 +1,33 @@
 import styles from "./WorkCard.module.css";
 
 interface WorkCardProps {
-  title: string;
-  imageUrl: string;
-  date?: string;
-  measurements?: string;
-  technique?: string;
-  description?: string;
+  data: Record<string, string>;
 }
 
-function WorkCard({
-  title,
-  imageUrl,
-  date,
-  measurements,
-  technique,
-  description,
-}: WorkCardProps) {
+function WorkCard({ data }: WorkCardProps) {
   return (
     <div className={styles.workCard}>
       <div className={styles.imageContainer}>
-        <img src={imageUrl} alt={title} className={styles.image} />
+        <img src={data.image_url} alt={data.title} className={styles.image} />
       </div>
-      <h2 className={styles.title}>{title}</h2>
-      {date && <p className={styles.date}>{date}</p>}
-      {measurements && <p className={styles.measurements}>{measurements}</p>}
-      {technique && <p className={styles.technique}>{technique}</p>}
-      {description && <p className={styles.description}>{description}</p>}
+      <h2 className={styles.title}>{data.title}</h2>
+
+      {/* Work Description Parameters */}
+      {Object.entries(data).map(([key, value]) => {
+        if (key !== "title" && key !== "image_url" && key !== "thumbnail_url") {
+          return (
+            <p key={key} className={styles.description}>
+              <strong>
+                {key
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                :
+              </strong>{" "}
+              {value}
+            </p>
+          );
+        }
+      })}
     </div>
   );
 }
