@@ -25,7 +25,7 @@ function Portfolio() {
 
     const fetchWorkParameters = async () => {
       const querySnapshot = await getDoc(doc(db, "portfolios", portfolioId!));
-      setWorkParameters(querySnapshot.data()?.work_parameters || []);
+      setWorkParameters(querySnapshot.data()?.parameters || []);
     };
 
     fetchWorks();
@@ -35,7 +35,7 @@ function Portfolio() {
   return (
     <div className={styles.portfolioContainer}>
       {works.map((work) => (
-        <WorkCard key={work.title} data={work} />
+        <WorkCard key={work.title} data={work} parameters={workParameters} />
       ))}
     </div>
   );
